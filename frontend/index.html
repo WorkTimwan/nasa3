@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Analog Finder – station site search</title>
+<style>
+:root{--bg:#0e1117;--panel:#171c26;--ink:#e6e9ef;--mut:#8b95a7;--acc:#ffb347;--line:#2a3140}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px system-ui,sans-serif}
+header{padding:12px 20px;border-bottom:1px solid var(--line);display:flex;gap:16px;align-items:baseline;flex-wrap:wrap}
+h1{font-size:18px;margin:0}header span{color:var(--mut)}
+main{display:grid;grid-template-columns:300px 1fr;gap:14px;padding:14px}
+@media(max-width:900px){main{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px}
+label{display:block;margin:8px 0 2px;color:var(--mut);font-size:12px}
+input,select,button{width:100%;padding:7px;border-radius:6px;border:1px solid var(--line);background:#0e1117;color:var(--ink)}
+button{background:var(--acc);color:#111;font-weight:600;cursor:pointer;margin-top:10px}
+.row{display:flex;gap:6px}.maps{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:14px}
+.cv{position:relative}canvas{width:100%;border-radius:6px;background:#000;cursor:crosshair;display:block}
+.cap{display:flex;justify-content:space-between;margin-bottom:6px}.warn{color:#ff6b6b;font-weight:600}
+table{width:100%;border-collapse:collapse;font-size:12px}td,th{padding:3px 5px;border-bottom:1px solid var(--line);text-align:left}
+tr.s{cursor:pointer}tr.s:hover{background:#222a38}.mut{color:var(--mut)}.small{font-size:12px}
+</style></head><body>
+<header><h1>Analog Finder</h1><span>Click any map (or type coordinates) → find terrain-alike regions on Earth, Moon and Mars</span></header>
+<main>
+<aside class="panel">
+ <b>Query</b>
+ <div class="row"><div><label>Latitude</label><input id="lat" value="-80"></div><div><label>Longitude</label><input id="lon" value="0"></div></div>
+ <label>Query radius (km)</label><input id="rad" type="number" value="25">
+ <label>Best % of map highlighted</label><input id="pct" type="number" value="10">
+ <label>Station suitability weight (0–1)</label><input id="sw" type="number" step="0.1" value="0.3">
+ <label><input id="ext" type="checkbox" style="width:auto"> use DEM-only features (relief) – only when all datasets are DEMs</label>
+ <label>Known analog sites</label><select id="an"><option value="">– pick –</option></select>
+ <button id="go">Find similar terrain</button>
+ <p id="msg" class="small mut"></p>
+ <b>Datasets</b><div id="ds" class="small"></div>
+ <label><input type="radio" name="layer" value="overlay" checked style="width:auto"> similarity</label>
+ <label><input type="radio" name="layer" value="suit" style="width:auto"> station suitability</label>
+</aside>
+<section>
+ <div id="maps" class="maps"></div>
+ <div class="panel" style="margin-top:14px"><b>Ranked candidate sites</b> <span class="mut small">(click a row to locate)</span>
+  <table id="tb"><thead><tr><th>#</th><th>Dataset</th><th>Lat</th><th>Lon</th><th>Area km²</th><th>Sim</th><th>Suit</th><th>Score</th></tr></thead><tbody></tbody></table>
+  <p><a id="dl" href="#" class="small" style="color:var(--acc)">Download GeoJSON</a></p></div>
+</section></main>
+<script>
+const $=id=>document.getElementById(id);let S={},V={},last=null;
+const api=(u,o)=>fetch(u,o).then(r=>r.json());
+function mk(d){const div=document.createElement('div');div.className='panel';
+ div.innerHTML=`<div class="cap"><b>${d.name}</b><span class="mut">${d.body}</span></div><div class="cv"><canvas></canvas></div><div class="small mut" id="h_${d.name}">hover for lat/lon</div>`+(d.synthetic?'<div class="warn small">SYNTHETIC demo data – not real terrain</div>':'');
+ $('maps').appendChild(div);const cv=div.querySelector('canvas');
+ V[d.name]={cv,img:null,over:{},w:0,h:0,sites:[],q:null,body:d.body};
+ cv.onclick=e=>{const p=pos(d.name,e);api(`/api/ll?dataset=${d.name}&x=${p.x}&y=${p.y}`).then(l=>{$('lat').value=l.lat.toFixed(3);$('lon').value=l.lon.toFixed(3);run()})};
+ let t;cv.onmousemove=e=>{clearTimeout(t);t=setTimeout(()=>{const p=pos(d.name,e);api(`/api/ll?dataset=${d.name}&x=${p.x}&y=${p.y}`).then(l=>$('h_'+d.name).textContent=`lat ${l.lat.toFixed(2)}  lon ${l.lon.toFixed(2)}`)},60)};
+ return api('/api/base/'+d.name).then(b=>{const i=new Image();i.onload=()=>{V[d.name].img=i;V[d.name].w=b.w;V[d.name].h=b.h;cv.width=b.w;cv.height=b.h;draw(d.name)};i.src=b.image})}
+function pos(n,e){const c=V[n].cv,r=c.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width*c.width,y:(e.clientY-r.top)/r.height*c.height}}
+function draw(n){const v=V[n],g=v.cv.getContext('2d');g.clearRect(0,0,v.w,v.h);g.fillStyle='#000';g.fillRect(0,0,v.w,v.h);
+ g.drawImage(v.img,0,0);const L=document.querySelector('input[name=layer]:checked').value;
+ if(v.over[L]){g.drawImage(v.over[L],0,0)}
+ v.sites.forEach(s=>{g.beginPath();g.arc(s.x,s.y,Math.max(6,v.w/90),0,7);g.lineWidth=2;g.strokeStyle='#4fd1ff';g.stroke();g.fillStyle='#4fd1ff';g.font=`${Math.max(12,v.w/60)}px sans-serif`;g.fillText(s.rank,s.x+8,s.y-8)});
+ if(v.q){g.strokeStyle='#fff';g.lineWidth=3;g.beginPath();g.arc(v.q.x,v.q.y,Math.max(8,v.w/70),0,7);g.stroke()}}
+function run(){$('msg').textContent='Searching…';
+ api('/api/query',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lat:+$('lat').value,lon:+$('lon').value,radius_km:+$('rad').value,pct:+$('pct').value,suit_weight:+$('sw').value,use_extras:$('ext').checked})}).then(r=>{
+ if(r.error){$('msg').textContent=r.error;return}last=r;$('msg').textContent=`Query region in ${r.query.dataset} (${r.query.cells} cells). Features: ${r.features.join(', ')}`;
+ const tb=document.querySelector('#tb tbody');tb.innerHTML='';let all=[];
+ Object.entries(V).forEach(([n,v])=>{v.sites=[];v.q=null;v.over={}});
+ Object.entries(r.datasets).forEach(([n,d])=>{const v=V[n];v.sites=d.sites;all.push(...d.sites.map(s=>({...s,ds:n})));
+  ['overlay','suit'].forEach(k=>{const i=new Image();i.onload=()=>{v.over[k]=i;draw(n)};i.src=d[k]});
+  if(n===r.query.dataset)v.q={x:r.query.x,y:r.query.y}});
+ all.sort((a,b)=>b.score-a.score).forEach(s=>{const tr=document.createElement('tr');tr.className='s';
+  tr.innerHTML=`<td>${s.rank}</td><td>${s.ds}</td><td>${s.lat.toFixed(2)}</td><td>${s.lon.toFixed(2)}</td><td>${Math.round(s.area_km2)}</td><td>${s.similarity.toFixed(2)}</td><td>${s.suitability.toFixed(2)}</td><td>${s.score.toFixed(2)}</td>`;
+  tr.onclick=()=>{V[s.ds].cv.scrollIntoView({behavior:'smooth'})};tb.appendChild(tr)});
+ Object.keys(V).forEach(draw);
+ const gj={type:'FeatureCollection',features:all.map(s=>({type:'Feature',geometry:{type:'Point',coordinates:[s.lon,s.lat]},properties:{dataset:s.ds,rank:s.rank,area_km2:s.area_km2,similarity:s.similarity,suitability:s.suitability}}))};
+ $('dl').href=URL.createObjectURL(new Blob([JSON.stringify(gj)],{type:'application/json'}));$('dl').download='candidate_sites.geojson'})}
+$('go').onclick=run;document.querySelectorAll('input[name=layer]').forEach(e=>e.onchange=()=>Object.keys(V).forEach(draw));
+$('an').onchange=e=>{const a=S.analogs[+e.target.value];if(a){$('lat').value=a.lat;$('lon').value=a.lon;run()}};
+api('/api/status').then(s=>{S=s;$('ds').innerHTML=s.datasets.map(d=>`<div>${d.status==='ok'?'●':'○'} ${d.name} <span class="mut">(${d.status})</span></div>`).join('');
+ s.analogs.forEach((a,i)=>{const o=document.createElement('option');o.value=i;o.textContent=`${a.name} (${a.lat}, ${a.lon})`;$('an').appendChild(o)});
+ Promise.all(s.datasets.filter(d=>d.status==='ok').map(mk)).then(run)});
+</script></body></html>

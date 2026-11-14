@@ -1,0 +1,46 @@
+{
+  "datasets": [
+    {
+      "name": "moon_lola_south_slope",
+      "body": "moon",
+      "loader": "slope_image",
+      "path": "data/moon/slope-75s-large-1.jpg",
+      "description": "LOLA slope map, 75S-90S (decoded from colour bar)"
+    },
+    {
+      "name": "moon_lola_ldem",
+      "body": "moon",
+      "loader": "auto",
+      "path": [
+        "data/moon/*.tif",
+        "data/samples/moon_lola_ldem.npz"
+      ],
+      "description": "LOLA global DEM (scripts/fetch_all_data.py)"
+    },
+    {
+      "name": "earth_copernicus_glo90",
+      "body": "earth",
+      "loader": "auto",
+      "path": "data/earth/*.tif",
+      "description": "Copernicus GLO-90 DEM tiles (scripts/download_earth.py)"
+    },
+    {
+      "name": "mars_mola",
+      "body": "mars",
+      "loader": "auto",
+      "path": [
+        "data/mars/*.tif",
+        "data/samples/mars_mola.npz"
+      ],
+      "description": "MOLA DEM GeoTIFF (scripts/convert_mola.py)"
+    },
+    {
+      "name": "demo_synthetic_earth",
+      "body": "earth",
+      "loader": "npz",
+      "path": "data/samples/demo_synthetic_earth.npz",
+      "description": "SYNTHETIC test terrain, not real data",
+      "synthetic": true
+    }
+  ]
+}

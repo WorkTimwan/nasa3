@@ -1,0 +1,18 @@
+{
+  "note": "Approximate centre coordinates of widely cited planetary analog sites. Verify before field use.",
+  "sites": [
+    {"name": "Atacama Desert (Yungay)", "lat": -24.1, "lon": -69.9, "analog_for": ["mars"], "terrain": "hyper-arid desert"},
+    {"name": "Haughton Crater, Devon Island", "lat": 75.4, "lon": -89.7, "analog_for": ["mars", "moon"], "terrain": "polar impact crater"},
+    {"name": "Death Valley", "lat": 36.5, "lon": -117.1, "analog_for": ["mars"], "terrain": "arid basin, alluvial fans"},
+    {"name": "Meteor Crater, Arizona", "lat": 35.03, "lon": -111.02, "analog_for": ["moon", "mars"], "terrain": "simple impact crater"},
+    {"name": "Sunset Crater / SP Flow", "lat": 35.37, "lon": -111.5, "analog_for": ["moon"], "terrain": "cinder cones, lava"},
+    {"name": "Mauna Kea / Mauna Loa", "lat": 19.8, "lon": -155.5, "analog_for": ["moon", "mars"], "terrain": "basaltic volcano"},
+    {"name": "Timanfaya, Lanzarote", "lat": 29.0, "lon": -13.75, "analog_for": ["moon", "mars"], "terrain": "volcanic field, lava tubes"},
+    {"name": "Askja, Iceland", "lat": 65.03, "lon": -16.75, "analog_for": ["moon", "mars"], "terrain": "volcanic caldera"},
+    {"name": "McMurdo Dry Valleys", "lat": -77.5, "lon": 162.5, "analog_for": ["mars"], "terrain": "polar desert"},
+    {"name": "Danakil Depression", "lat": 14.2, "lon": 40.3, "analog_for": ["mars"], "terrain": "rift, evaporites"},
+    {"name": "Rio Tinto", "lat": 37.7, "lon": -6.6, "analog_for": ["mars"], "terrain": "acidic river, mineral"},
+    {"name": "Ries Crater", "lat": 48.9, "lon": 10.6, "analog_for": ["moon"], "terrain": "complex impact crater"},
+    {"name": "Salar de Uyuni", "lat": -20.2, "lon": -67.5, "analog_for": ["mars"], "terrain": "salt flat plateau"}
+  ]
+}
